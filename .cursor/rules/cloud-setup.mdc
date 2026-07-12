@@ -1,0 +1,11 @@
+---
+description: Cursor Cloud environment notes for Outsource
+alwaysApply: true
+---
+
+# Cursor Cloud instructions
+
+- Use Bun for installation, development, and verification.
+- Do not use a real `CURSOR_API_KEY` or call the live Cursor API. Implement changes and validate them with mocks and offline tests only.
+- Cursor Cloud may rewrite GitHub origins to tokenized URLs, which Outsource intentionally rejects. For repository-resolution tests, use a clean GitHub origin, such as a scratch repository run with `GIT_CONFIG_GLOBAL=/dev/null`.
+- Non-secret configuration lives at `~/.config/outsource/config.toml`.
