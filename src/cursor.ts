@@ -1,17 +1,22 @@
 import { Agent, Cursor, AgentBusyError, AgentNotFoundError, AuthenticationError, ConfigurationError, CursorSdkError, NetworkError, RateLimitError, type Run, type SDKAgentInfo, type SDKImage, type SDKModel } from "@cursor/sdk";
 import { err, failure, ok, type CliError, type CliResult } from "./error.js";
+import type { ModelSelection } from "./model-config.js";
 
 export interface CursorGateway {
   models(apiKey: string): Promise<SDKModel[]>;
-  create(input: { apiKey: string; model: string; repository: string; startingRef: string; prompt: string; images: SDKImage[] }): Promise<{ agentId: string; run: Run }>;
+  create(input: { apiKey: string; model: ModelSelection; repository: string; startingRef: string; prompt: string; images: SDKImage[] }): Promise<{ agentId: string; run: Run }>;
   status(apiKey: string, agentId: string): Promise<{ agent: SDKAgentInfo; runs: Run[] }>;
   followUp(input: { apiKey: string; agentId: string; prompt: string; images: SDKImage[] }): Promise<Run>;
+}
+
+export function modelSelectionForSdk(model: ModelSelection): { id: string; params?: Array<{ id: string; value: string }> } {
+  return model.params.length ? { id: model.id, params: model.params.map((param) => ({ id: param.id, value: param.value })) } : { id: model.id };
 }
 
 export const cursorGateway: CursorGateway = {
   models: (apiKey) => Cursor.models.list({ apiKey }),
   async create(input) {
-    const agent = await Agent.create({ apiKey: input.apiKey, model: { id: input.model }, mode: "agent", cloud: { repos: [{ url: input.repository, startingRef: input.startingRef }], workOnCurrentBranch: false, autoCreatePR: true } });
+    const agent = await Agent.create({ apiKey: input.apiKey, model: modelSelectionForSdk(input.model), mode: "agent", cloud: { repos: [{ url: input.repository, startingRef: input.startingRef }], workOnCurrentBranch: false, autoCreatePR: true } });
     const run = await agent.send(input.images.length ? { text: input.prompt, images: input.images } : input.prompt);
     return { agentId: agent.agentId, run };
   },

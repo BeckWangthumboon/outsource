@@ -35,7 +35,7 @@ outsource auth set
 outsource auth status
 outsource auth clear
 
-outsource config set-model <model-id>
+outsource config set-model <model-id> [--param <id=value>]...
 outsource config show
 
 outsource launch --prompt "..." [--branch <branch>] [--image <path-or-url>]...
@@ -90,8 +90,8 @@ The parent Claude agent treats this as a handoff. It follows the GitHub PR workf
 
 Human-facing configuration only.
 
-- `config set-model <model-id>` verifies the model ID against Cursor's available models, then stores it as the default model.
-- `config show` displays the effective non-secret configuration.
+- `config set-model <model-id> [--param <id=value>]...` atomically validates the model ID and any explicit parameters against Cursor's available models, then stores the complete selection as the default model configuration. Each invocation fully replaces the saved model and parameters; changing models never preserves parameters that were valid only for the previous model.
+- `config show` displays the effective non-secret configuration, including any explicit model parameters.
 - The draft Claude skill must instruct calling agents not to use `config` commands.
 
 ### `status`
@@ -143,6 +143,19 @@ Keep configuration deliberately minimal in v1. There is one non-secret, user-lev
 model = "claude-4.6-sonnet-thinking"
 ```
 
+When explicit model parameters are configured:
+
+```toml
+[defaults]
+model = "composer-2.5"
+
+[[defaults.params]]
+id = "fast"
+value = "false"
+```
+
+Legacy model-only files remain supported. `launch` passes the configured `ModelSelection` to `Agent.create`, including explicit parameters in SDK array form `{ id, value }`.
+
 The CLI derives repository identity from the current Git working tree, detects the repository's remote default branch when `--branch` is omitted, always creates a PR, and does not support model overrides. Therefore it does **not** need a repository-local configuration file in v1.
 
 This configuration is for the human owner, not the calling agent. If per-repository defaults become necessary later, add them as a separate feature rather than introducing them preemptively.
@@ -163,7 +176,7 @@ The default model is the only non-secret setting configurable in v1. Keep runtim
 The implementation uses `@cursor/sdk` with Cursor's cloud runtime:
 
 - `Agent.create({ cloud: ... })` creates the hosted Cloud Agent against the resolved repository and branch.
-- A configured default `model` is passed by the CLI.
+- A configured default `ModelSelection` is passed by the CLI, including explicit parameters when configured.
 - `agent.send(...)` starts the initial run or sends a follow-up.
 - The CLI exposes stable Cursor agent/run IDs rather than hiding them.
 - Cursor is configured to create a PR automatically.
@@ -208,7 +221,7 @@ The draft should teach Claude agents to:
 ## Acceptance criteria
 
 1. A user can securely store a Cursor API key on macOS or Linux, and `CURSOR_API_KEY` overrides it when set.
-2. A human can inspect available models and set one validated default model with `config set-model`; calling agents cannot choose or alter it.
+2. A human can inspect available models and atomically set one validated default model selection with `config set-model`; calling agents cannot choose or alter it.
 3. From a Git repository, `launch` resolves `origin`, chooses the configured/default base branch, starts a Cursor-hosted agent, and returns JSON IDs immediately.
 4. `launch --branch <branch>` rejects invalid/non-remote branches and launches successfully for a verified remote branch.
 5. Repeated local-path and HTTPS `--image` inputs reach the Cursor agent in order.

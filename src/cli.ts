@@ -2,10 +2,11 @@
 import { Command } from "commander";
 import { Result } from "better-result";
 import { getApiKey, storeApiKey, clearApiKey } from "./auth.js";
-import { readModel, writeModel, configPath } from "./config.js";
+import { readModelSelection, writeModelSelection, configPath } from "./config.js";
 import { cursorCall, cursorGateway } from "./cursor.js";
 import { resolveRepository } from "./git.js";
 import { prepareImages } from "./images.js";
+import { validateModelSelection } from "./model-config.js";
 import { CommandFailure, printError, printSuccess, type GlobalOptions } from "./output.js";
 import { readSecret } from "./prompt.js";
 
@@ -25,18 +26,24 @@ auth.command("status").action(async (_args, command: Command) => { const value =
 auth.command("clear").action(async (_args, command: Command) => { const result = await clearApiKey(); if (Result.isError(result)) printError(result.error, opts(command)); printSuccess({ cleared: true }, opts(command), "Stored credential cleared."); });
 
 const config = program.command("config");
-config.command("set-model <model-id>").action(async (modelId: string, _args, command: Command) => {
+config.command("set-model <model-id>").option("--param <id=value>", "set a model parameter", collect, []).action(async (modelId: string, args: { param: string[] }, command: Command) => {
   const { key } = await credential(command); const listed = await cursorCall(() => cursorGateway.models(key)); if (Result.isError(listed)) printError(listed.error, opts(command));
-  const model = listed.value.find((item) => item.id === modelId || item.aliases?.includes(modelId));
-  if (!model) printError({ code: "model_unavailable", message: `Model '${modelId}' is not available to this Cursor account.`, hint: "Run 'outsource models' to list valid model IDs.", retryable: false }, opts(command));
-  const saved = await writeModel(model.id); if (Result.isError(saved)) printError(saved.error, opts(command)); printSuccess({ model: model.id }, opts(command), `Default model set to ${model.id}.`);
+  const validated = validateModelSelection(modelId, args.param ?? [], listed.value); if (Result.isError(validated)) printError(validated.error, opts(command));
+  const saved = await writeModelSelection(validated.value); if (Result.isError(saved)) printError(saved.error, opts(command));
+  const payload = validated.value.params.length ? { model: validated.value.id, params: validated.value.params } : { model: validated.value.id };
+  printSuccess(payload, opts(command), validated.value.params.length ? `Default model set to ${validated.value.id} with ${validated.value.params.length} parameter(s).` : `Default model set to ${validated.value.id}.`);
 });
-config.command("show").action(async (_args, command: Command) => { const model = await readModel(); if (Result.isError(model)) printError(model.error, opts(command)); const path = configPath(); if (Result.isError(path)) printError(path.error, opts(command)); printSuccess({ model: model.value, path: path.value }, opts(command)); });
+config.command("show").action(async (_args, command: Command) => {
+  const selection = await readModelSelection(); if (Result.isError(selection)) printError(selection.error, opts(command));
+  const path = configPath(); if (Result.isError(path)) printError(path.error, opts(command));
+  const payload = selection.value.params.length ? { model: selection.value.id, params: selection.value.params, path: path.value } : { model: selection.value.id, path: path.value };
+  printSuccess(payload, opts(command));
+});
 
 program.command("models").action(async (_args, command: Command) => { const { key } = await credential(command); const result = await cursorCall(() => cursorGateway.models(key)); if (Result.isError(result)) printError(result.error, opts(command)); printSuccess({ models: result.value }, opts(command)); });
 
 program.command("launch").requiredOption("--prompt <text>").option("--branch <branch>").option("--image <path-or-url>", "attach ordered image", collect, []).action(async (args: { prompt: string; branch?: string; image: string[] }, command: Command) => {
-  const [repo, model, images, authResult] = await Promise.all([resolveRepository(args.branch), readModel(), prepareImages(args.image), getApiKey()]);
+  const [repo, model, images, authResult] = await Promise.all([resolveRepository(args.branch), readModelSelection(), prepareImages(args.image), getApiKey()]);
   if (Result.isError(repo)) printError(repo.error, opts(command));
   if (Result.isError(model)) printError(model.error, opts(command));
   if (Result.isError(images)) printError(images.error, opts(command));

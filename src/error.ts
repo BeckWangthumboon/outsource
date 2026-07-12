@@ -4,7 +4,8 @@ export type ErrorCode =
   | "not_git_repository" | "missing_origin" | "unsupported_remote"
   | "invalid_branch" | "branch_not_found" | "missing_credential"
   | "credential_store_unavailable" | "credential_store_error"
-  | "missing_model" | "model_unavailable" | "invalid_image"
+  | "missing_model" | "model_unavailable" | "invalid_model_param" | "duplicate_model_param"
+  | "unsupported_model_param" | "unsupported_model_param_value" | "invalid_image"
   | "image_too_large" | "agent_busy" | "authentication_error"
   | "rate_limited" | "network_error" | "agent_not_found"
   | "cursor_api_error" | "configuration_error" | "internal_error";
