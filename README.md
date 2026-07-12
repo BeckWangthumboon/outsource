@@ -7,7 +7,7 @@ I built this with 5.6 Sol so that Codex can orchestrate cheaper, straightfoward 
 ## Install
 
 ```bash
-bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#4f4e0ee6f405d36342125013250a6c914ab5d7ed'
+bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#158fccbd4331f1fcdd50476d8069f9dffdc13413'
 outsource skill install
 ```
 
@@ -23,7 +23,7 @@ To upgrade after a new release, replace the global CLI with its tagged Git sourc
 
 ```bash
 bun remove --global outsource-cli
-bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#4f4e0ee6f405d36342125013250a6c914ab5d7ed'
+bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#158fccbd4331f1fcdd50476d8069f9dffdc13413'
 outsource skill install --force
 ```
 
