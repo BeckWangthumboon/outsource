@@ -5,12 +5,33 @@ A Bun/TypeScript CLI for launching and lightly managing Cursor-hosted Cloud Agen
 ## Install
 
 ```bash
-bun install
-bun run build
-bun link
+bun add --global github:BeckWangthumboon/outsource#v0.1.0
+outsource skill install
 ```
 
-The install exposes both `outsource` and the `os` shorthand.
+The GitHub install exposes both `outsource` and the `os` shorthand. It requires Bun 1.3 or newer; no npm publication is needed.
+
+To upgrade after a new release, install its tag and refresh the bundled skill:
+
+```bash
+bun add --global github:BeckWangthumboon/outsource#v0.1.0
+outsource skill install --force
+```
+
+To remove the Codex skill and CLI:
+
+```bash
+outsource skill uninstall
+bun remove --global outsource-cli
+```
+
+For local development:
+
+```bash
+bun install --frozen-lockfile
+bun run verify
+bun link
+```
 
 Requires Bun, Git, and either macOS Keychain or Linux Secret Service (`secret-tool` from `libsecret-tools`). Set `CURSOR_API_KEY` for CI; it takes precedence over stored credentials.
 

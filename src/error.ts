@@ -8,7 +8,8 @@ export type ErrorCode =
   | "unsupported_model_param" | "unsupported_model_param_value" | "invalid_image"
   | "image_too_large" | "agent_busy" | "authentication_error"
   | "rate_limited" | "network_error" | "agent_not_found"
-  | "cursor_api_error" | "configuration_error" | "internal_error";
+  | "cursor_api_error" | "configuration_error" | "internal_error"
+  | "skill_already_installed" | "skill_not_installed" | "skill_install_error";
 
 export interface CliError {
   code: ErrorCode;
