@@ -3,7 +3,6 @@ import { err, failure, ok, type CliResult } from "./error.js";
 import { runCommand, type CommandRunner } from "./process.js";
 
 const SERVICE = "outsource";
-const LEGACY_SERVICE = "cursor-cloud";
 const ACCOUNT = "api-key";
 
 function platform(): CliResult<"darwin" | "linux"> {
@@ -16,14 +15,12 @@ export async function getApiKey(runner: CommandRunner = runCommand): Promise<Cli
   if (env) return ok({ key: env, source: "environment" });
   const os = platform(); if (Result.isError(os)) return err(os.error);
   try {
-    for (const service of [SERVICE, LEGACY_SERVICE]) {
-      const command = os.value === "darwin"
-        ? ["security", "find-generic-password", "-s", service, "-a", ACCOUNT, "-w"]
-        : ["secret-tool", "lookup", "service", service, "account", ACCOUNT];
-      const found = await runner(command);
-      const key = found.stdout.trim();
-      if (found.exitCode === 0 && key) return ok({ key, source: os.value === "darwin" ? "keychain" : "secret-service" });
-    }
+    const command = os.value === "darwin"
+      ? ["security", "find-generic-password", "-s", SERVICE, "-a", ACCOUNT, "-w"]
+      : ["secret-tool", "lookup", "service", SERVICE, "account", ACCOUNT];
+    const found = await runner(command);
+    const key = found.stdout.trim();
+    if (found.exitCode === 0 && key) return ok({ key, source: os.value === "darwin" ? "keychain" : "secret-service" });
     return err(failure("missing_credential", "No Cursor API key is configured.", { hint: "Run 'outsource auth set' or set CURSOR_API_KEY." }));
   } catch (cause) {
     return err(failure("credential_store_unavailable", "The secure credential store is unavailable.", { hint: os.value === "linux" ? "Install libsecret-tools (secret-tool), or set CURSOR_API_KEY." : "Check Keychain access, or set CURSOR_API_KEY.", cause }));
@@ -51,14 +48,13 @@ async function runWithInput(command: string[], input: string) {
 export async function clearApiKey(runner: CommandRunner = runCommand): Promise<CliResult<void>> {
   const os = platform(); if (Result.isError(os)) return err(os.error);
   try {
-    for (const service of [SERVICE, LEGACY_SERVICE]) {
-      const command = os.value === "darwin"
-        ? ["security", "delete-generic-password", "-s", service, "-a", ACCOUNT]
-        : ["secret-tool", "clear", "service", service, "account", ACCOUNT];
-      const result = await runner(command);
-      if (result.exitCode !== 0 && result.exitCode !== 1) return err(failure("credential_store_error", "Could not clear the stored credential.", { cause: result.stderr }));
-    }
-    return ok(undefined);
+    const command = os.value === "darwin"
+      ? ["security", "delete-generic-password", "-s", SERVICE, "-a", ACCOUNT]
+      : ["secret-tool", "clear", "service", SERVICE, "account", ACCOUNT];
+    const result = await runner(command);
+    return result.exitCode === 0 || result.exitCode === 1
+      ? ok(undefined)
+      : err(failure("credential_store_error", "Could not clear the stored credential.", { cause: result.stderr }));
   }
   catch (cause) { return err(failure("credential_store_unavailable", "The secure credential store is unavailable.", { cause })); }
 }
