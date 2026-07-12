@@ -7,6 +7,7 @@ import { cursorCall, cursorGateway } from "./cursor.js";
 import { resolveRepository } from "./git.js";
 import { prepareImages } from "./images.js";
 import { CommandFailure, printError, printSuccess, type GlobalOptions } from "./output.js";
+import { readSecret } from "./prompt.js";
 
 const program = new Command().name("cursor-cloud").description("Launch and lightly manage Cursor Cloud Agents").version("0.1.0").option("--json", "emit stable JSON output").option("--debug", "include debug details in errors");
 const opts = (command: Command): GlobalOptions => command.optsWithGlobals<GlobalOptions>();
@@ -16,8 +17,7 @@ async function credential(command: Command) { const result = await getApiKey(); 
 const auth = program.command("auth");
 auth.command("set").action(async (_args, command: Command) => {
   if (!process.stdin.isTTY) printError({ code: "configuration_error", message: "auth set requires an interactive terminal.", retryable: false }, opts(command));
-  process.stdout.write("Cursor API key: ");
-  const key = (await new Promise<string>((resolve) => { process.stdin.setRawMode?.(true); process.stdin.resume(); let value = ""; const read = (data: Buffer) => { const char = data.toString(); if (char === "\r" || char === "\n") { process.stdin.off("data", read); process.stdin.setRawMode?.(false); process.stdout.write("\n"); resolve(value); } else if (char === "\u0003") process.exit(130); else if (char === "\u007f") value = value.slice(0, -1); else value += char; }; process.stdin.on("data", read); })).trim();
+  const key = await readSecret();
   if (!key) printError({ code: "configuration_error", message: "API key cannot be empty.", retryable: false }, opts(command));
   const result = await storeApiKey(key); if (Result.isError(result)) printError(result.error, opts(command)); printSuccess({ stored: true }, opts(command), "Cursor API key stored securely.");
 });
