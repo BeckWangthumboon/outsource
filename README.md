@@ -42,7 +42,7 @@ bun run verify
 bun link
 ```
 
-Requires Bun, Git, and either macOS Keychain or Linux Secret Service (`secret-tool` from `libsecret-tools`). Set `CURSOR_API_KEY` for CI; it takes precedence over stored credentials.
+Requires Bun and Git. Credentials use macOS Keychain or Linux Secret Service (`secret-tool` from `libsecret-tools`) when available; on Linux without a secret service, Outsource securely falls back to `~/.config/outsource/auth.json` (directory mode `0700`, file mode `0600`). `CURSOR_API_KEY` takes precedence and is recommended for CI.
 
 ## Setup and usage
 

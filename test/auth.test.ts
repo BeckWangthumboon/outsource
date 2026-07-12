@@ -87,11 +87,13 @@ describe("credential lookup", () => {
     delete process.env.CURSOR_API_KEY;
 
     const runner: CommandRunner = async (command) => {
-      if (command.join(" ").includes("lookup")) return { stdout: `${TEST_KEY}\n`, stderr: "", exitCode: 0 };
-      return { stdout: "", stderr: "", exitCode: 1 };
+      return command.includes("outsource")
+        ? { stdout: `${TEST_KEY}\n`, stderr: "", exitCode: 0 }
+        : { stdout: "", stderr: "", exitCode: 1 };
     };
     const result = await getApiKey(runner, home);
-    expect(Result.isOk(result) && result.value).toEqual({ key: TEST_KEY, source: "secret-service" });
+    const source = process.platform === "darwin" ? "keychain" : "secret-service";
+    expect(Result.isOk(result) && result.value).toEqual({ key: TEST_KEY, source });
   });
 
   test("reports missing credential when nothing is configured", async () => {
