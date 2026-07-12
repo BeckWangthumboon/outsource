@@ -1,4 +1,4 @@
 interface:
   display_name: "Outsource"
-  short_description: "Delegate repository work to Cursor Cloud Agents"
-  default_prompt: "Use $outsource to hand off an isolated implementation task in the current repository."
+  short_description: "Delegate PR-ready work to Cursor Cloud Agents"
+  default_prompt: "Use $outsource to delegate this implementation task and track completion through its GitHub PR."
