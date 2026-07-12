@@ -1,6 +1,8 @@
 # outsource
 
-A Bun/TypeScript CLI for launching and lightly managing Cursor-hosted Cloud Agents from the current GitHub repository.
+A CLI for launching and managing Cursor Cloud Agents for agents.
+
+I built this with 5.6 Sol so that Codex can orchestrate cheaper, straightfoward tasks to Composer instead of burning valuable Sol tokens.
 
 ## Install
 
