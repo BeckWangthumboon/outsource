@@ -7,22 +7,23 @@ I built this with 5.6 Sol so that Codex can orchestrate cheaper, straightfoward 
 ## Install
 
 ```bash
-bun add --global github:BeckWangthumboon/outsource#v0.1.1
+bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#v0.1.2'
 outsource skill install
 ```
 
 The GitHub install exposes both `outsource` and the `os` shorthand. It requires Bun 1.3 or newer; no npm publication is needed.
 
-`outsource skill install` wraps the [skills.sh CLI](https://www.skills.sh/docs/cli) and installs the `outsource` skill globally for universal agents. Skills.sh uses `universal` for the shared `.agents/skills` convention; its global location is `~/.config/agents/skills`. It runs the equivalent of:
+`outsource skill install` wraps the [skills.sh CLI](https://www.skills.sh/docs/cli) and installs the `outsource` skill globally for universal agents at `~/.agents/skills`. It runs the equivalent of:
 
 ```bash
 npx skills add BeckWangthumboon/outsource --skill outsource --agent universal --global
 ```
 
-To upgrade after a new release, install its tag and refresh the globally installed skill:
+To upgrade after a new release, replace the global CLI with its tagged Git source, then refresh the globally installed skill:
 
 ```bash
-bun add --global github:BeckWangthumboon/outsource#v0.1.1
+bun remove --global outsource-cli
+bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#v0.1.2'
 outsource skill install --force
 ```
 

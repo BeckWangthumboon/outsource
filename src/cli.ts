@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
 import { Result } from "better-result";
+import packageJson from "../package.json" with { type: "json" };
 import { getApiKey, storeApiKey, clearApiKey } from "./auth.js";
 import { readModelSelection, writeModelSelection, configPath } from "./config.js";
 import { cursorCall, cursorGateway } from "./cursor.js";
@@ -11,7 +12,7 @@ import { CommandFailure, printError, printSuccess, type GlobalOptions } from "./
 import { readSecret } from "./prompt.js";
 import { installSkill, skillStatus, uninstallSkill } from "./skill-install.js";
 
-const program = new Command().name("outsource").description("Launch and lightly manage Cursor Cloud Agents").version("0.1.0").option("--json", "emit stable JSON output").option("--debug", "include debug details in errors");
+const program = new Command().name("outsource").description("Launch and lightly manage Cursor Cloud Agents").version(packageJson.version).option("--json", "emit stable JSON output").option("--debug", "include debug details in errors");
 const opts = (command: Command): GlobalOptions => command.optsWithGlobals<GlobalOptions>();
 const collect = (value: string, previous: string[]): string[] => [...previous, value];
 async function credential(command: Command) { const result = await getApiKey(); if (Result.isError(result)) printError(result.error, opts(command)); return result.value; }
