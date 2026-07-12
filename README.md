@@ -7,7 +7,7 @@ I built this with 5.6 Sol so that Codex can orchestrate cheaper, straightfoward 
 ## Install
 
 ```bash
-bun add --global github:BeckWangthumboon/outsource#v0.1.0
+bun add --global github:BeckWangthumboon/outsource#v0.1.1
 outsource skill install
 ```
 
@@ -22,7 +22,7 @@ npx skills add BeckWangthumboon/outsource --skill outsource --agent universal --
 To upgrade after a new release, install its tag and refresh the globally installed skill:
 
 ```bash
-bun add --global github:BeckWangthumboon/outsource#v0.1.0
+bun add --global github:BeckWangthumboon/outsource#v0.1.1
 outsource skill install --force
 ```
 
