@@ -10,7 +10,7 @@ afterEach(async () => { if (directory) await rm(directory, { recursive: true, fo
 
 describe("image preparation", () => {
   test("preserves mixed local and remote order", async () => {
-    directory = await mkdtemp(join(tmpdir(), "cursor-cloud-")); await Bun.write(join(directory, "one.png"), new Uint8Array([1, 2, 3]));
+    directory = await mkdtemp(join(tmpdir(), "outsource-")); await Bun.write(join(directory, "one.png"), new Uint8Array([1, 2, 3]));
     const result = await prepareImages(["https://example.com/zero.webp", "one.png", "https://example.com/two.jpg"], directory);
     expect(Result.isOk(result)).toBe(true); if (Result.isError(result)) return;
     expect(result.value[0]).toEqual({ url: "https://example.com/zero.webp" });

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Cursor Cloud"
-  short_description: "Delegate repository tasks to Cursor Cloud Agents"
-  default_prompt: "Use $cursor-cloud to hand off an isolated implementation task in the current repository."

@@ -5,17 +5,17 @@ import { err, failure, ok, type CliResult } from "./error.js";
 
 export function configPath(home = process.env.HOME): CliResult<string> {
   if (!home) return err(failure("configuration_error", "HOME is not set; cannot locate configuration."));
-  return ok(join(home, ".config", "cursor-cloud", "config.toml"));
+  return ok(join(home, ".config", "outsource", "config.toml"));
 }
 
 export async function readModel(home?: string): Promise<CliResult<string>> {
   const path = configPath(home); if (Result.isError(path)) return err(path.error);
   try {
     const file = Bun.file(path.value);
-    if (!(await file.exists())) return err(failure("missing_model", "No default model is configured.", { hint: "Run 'cursor-cloud config set-model <model-id>'." }));
+    if (!(await file.exists())) return err(failure("missing_model", "No default model is configured.", { hint: "Run 'outsource config set-model <model-id>'." }));
     const value = parse(await file.text()) as { defaults?: { model?: unknown } };
     return typeof value.defaults?.model === "string" && value.defaults.model.trim()
-      ? ok(value.defaults.model) : err(failure("missing_model", "The configuration does not contain defaults.model.", { hint: "Run 'cursor-cloud config set-model <model-id>'." }));
+      ? ok(value.defaults.model) : err(failure("missing_model", "The configuration does not contain defaults.model.", { hint: "Run 'outsource config set-model <model-id>'." }));
   } catch (cause) { return err(failure("configuration_error", "Could not read the configuration file.", { cause })); }
 }
 

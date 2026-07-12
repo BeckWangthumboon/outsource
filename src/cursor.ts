@@ -28,7 +28,7 @@ export const cursorGateway: CursorGateway = {
 export function mapCursorError(cause: unknown): CliError {
   const detail = cause instanceof CursorSdkError ? { requestId: cause.requestId, cause } : { cause };
   if (cause instanceof AgentBusyError) return failure("agent_busy", "The agent already has an active run.", { hint: "Check its status and send the follow-up after the active run finishes.", ...detail });
-  if (cause instanceof AuthenticationError) return failure("authentication_error", "Cursor rejected the configured API key.", { hint: "Run 'cursor-cloud auth set' with a valid key.", ...detail });
+  if (cause instanceof AuthenticationError) return failure("authentication_error", "Cursor rejected the configured API key.", { hint: "Run 'outsource auth set' with a valid key.", ...detail });
   if (cause instanceof RateLimitError) return failure("rate_limited", cause.message, { retryable: true, ...detail });
   if (cause instanceof NetworkError) return failure("network_error", cause.message, { retryable: true, ...detail });
   if (cause instanceof AgentNotFoundError) return failure("agent_not_found", cause.message, detail);

@@ -1,4 +1,4 @@
-# Cursor Cloud CLI — Mini PRD
+# Outsource CLI — Mini PRD
 
 ## Purpose
 
@@ -31,17 +31,17 @@ The CLI wraps Cursor's TypeScript SDK. Calling agents use a constrained command 
 All operational commands support `--json` for machine-readable output.
 
 ```bash
-cursor-cloud auth set
-cursor-cloud auth status
-cursor-cloud auth clear
+outsource auth set
+outsource auth status
+outsource auth clear
 
-cursor-cloud config set-model <model-id>
-cursor-cloud config show
+outsource config set-model <model-id>
+outsource config show
 
-cursor-cloud launch --prompt "..." [--branch <branch>] [--image <path-or-url>]...
-cursor-cloud status <agent-id>
-cursor-cloud follow-up <agent-id> --prompt "..." [--image <path-or-url>]...
-cursor-cloud models
+outsource launch --prompt "..." [--branch <branch>] [--image <path-or-url>]...
+outsource status <agent-id>
+outsource follow-up <agent-id> --prompt "..." [--image <path-or-url>]...
+outsource models
 ```
 
 ### `auth`
@@ -135,7 +135,7 @@ Any verified remote branch is valid in v1. The selected branch is only the start
 Keep configuration deliberately minimal in v1. There is one non-secret, user-level configuration file:
 
 ```text
-~/.config/cursor-cloud/config.toml
+~/.config/outsource/config.toml
 ```
 
 ```toml
@@ -193,7 +193,7 @@ The implementation uses `@cursor/sdk` with Cursor's cloud runtime:
 
 ## Draft Claude skill
 
-Generate a **draft** `cursor-cloud` skill as part of the project. It is explicitly a starting point for manual review and substantial editing, not a final prescriptive skill.
+Generate a **draft** `outsource` skill as part of the project. It is explicitly a starting point for manual review and substantial editing, not a final prescriptive skill.
 
 The draft should teach Claude agents to:
 

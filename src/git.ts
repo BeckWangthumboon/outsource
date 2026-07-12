@@ -24,7 +24,7 @@ export function validateBranchName(branch: string): CliResult<string> {
 }
 
 export async function resolveRepository(branch: string | undefined, runner: CommandRunner = runCommand): Promise<CliResult<RepositoryContext>> {
-  const root = await checked(runner, ["git", "rev-parse", "--show-toplevel"], "not_git_repository", "Run cursor-cloud from inside a Git working tree.");
+  const root = await checked(runner, ["git", "rev-parse", "--show-toplevel"], "not_git_repository", "Run outsource from inside a Git working tree.");
   if (Result.isError(root)) return err(root.error);
   const remote = await checked(runner, ["git", "-C", root.value, "remote", "get-url", "origin"], "missing_origin", "The repository has no origin remote.");
   if (Result.isError(remote)) return err(remote.error);

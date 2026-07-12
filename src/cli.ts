@@ -9,7 +9,7 @@ import { prepareImages } from "./images.js";
 import { CommandFailure, printError, printSuccess, type GlobalOptions } from "./output.js";
 import { readSecret } from "./prompt.js";
 
-const program = new Command().name("cursor-cloud").description("Launch and lightly manage Cursor Cloud Agents").version("0.1.0").option("--json", "emit stable JSON output").option("--debug", "include debug details in errors");
+const program = new Command().name("outsource").description("Launch and lightly manage Cursor Cloud Agents").version("0.1.0").option("--json", "emit stable JSON output").option("--debug", "include debug details in errors");
 const opts = (command: Command): GlobalOptions => command.optsWithGlobals<GlobalOptions>();
 const collect = (value: string, previous: string[]): string[] => [...previous, value];
 async function credential(command: Command) { const result = await getApiKey(); if (Result.isError(result)) printError(result.error, opts(command)); return result.value; }
@@ -28,7 +28,7 @@ const config = program.command("config");
 config.command("set-model <model-id>").action(async (modelId: string, _args, command: Command) => {
   const { key } = await credential(command); const listed = await cursorCall(() => cursorGateway.models(key)); if (Result.isError(listed)) printError(listed.error, opts(command));
   const model = listed.value.find((item) => item.id === modelId || item.aliases?.includes(modelId));
-  if (!model) printError({ code: "model_unavailable", message: `Model '${modelId}' is not available to this Cursor account.`, hint: "Run 'cursor-cloud models' to list valid model IDs.", retryable: false }, opts(command));
+  if (!model) printError({ code: "model_unavailable", message: `Model '${modelId}' is not available to this Cursor account.`, hint: "Run 'outsource models' to list valid model IDs.", retryable: false }, opts(command));
   const saved = await writeModel(model.id); if (Result.isError(saved)) printError(saved.error, opts(command)); printSuccess({ model: model.id }, opts(command), `Default model set to ${model.id}.`);
 });
 config.command("show").action(async (_args, command: Command) => { const model = await readModel(); if (Result.isError(model)) printError(model.error, opts(command)); const path = configPath(); if (Result.isError(path)) printError(path.error, opts(command)); printSuccess({ model: model.value, path: path.value }, opts(command)); });
