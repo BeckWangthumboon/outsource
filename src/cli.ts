@@ -9,7 +9,7 @@ import { prepareImages } from "./images.js";
 import { validateModelSelection } from "./model-config.js";
 import { CommandFailure, printError, printSuccess, type GlobalOptions } from "./output.js";
 import { readSecret } from "./prompt.js";
-import { installSkill, skillPaths, skillStatus, uninstallSkill } from "./skill-install.js";
+import { installSkill, skillStatus, uninstallSkill } from "./skill-install.js";
 
 const program = new Command().name("outsource").description("Launch and lightly manage Cursor Cloud Agents").version("0.1.0").option("--json", "emit stable JSON output").option("--debug", "include debug details in errors");
 const opts = (command: Command): GlobalOptions => command.optsWithGlobals<GlobalOptions>();
@@ -26,21 +26,18 @@ auth.command("set").action(async (_args, command: Command) => {
 auth.command("status").action(async (_args, command: Command) => { const value = await credential(command); printSuccess({ available: true, source: value.source }, opts(command), `Credential available (${value.source}).`); });
 auth.command("clear").action(async (_args, command: Command) => { const result = await clearApiKey(); if (Result.isError(result)) printError(result.error, opts(command)); printSuccess({ cleared: true }, opts(command), "Stored credential cleared."); });
 
-const skill = program.command("skill").description("Install the bundled Codex skill");
+const skill = program.command("skill").description("Manage the Outsource skill through skills.sh");
 skill.command("install").option("--force", "replace an existing installation").action(async (args: { force?: boolean }, command: Command) => {
-  const paths = skillPaths(); if (Result.isError(paths)) printError(paths.error, opts(command));
-  const result = await installSkill(paths.value, args.force); if (Result.isError(result)) printError(result.error, opts(command));
-  printSuccess({ installed: true, path: result.value.path }, opts(command), `Outsource skill installed at ${result.value.path}.`);
+  const result = await installSkill(args.force); if (Result.isError(result)) printError(result.error, opts(command));
+  printSuccess({ installed: true, output: result.value.output }, opts(command), result.value.output || "Outsource skill installed globally for universal agents.");
 });
 skill.command("status").action(async (_args, command: Command) => {
-  const paths = skillPaths(); if (Result.isError(paths)) printError(paths.error, opts(command));
-  const result = await skillStatus(paths.value); if (Result.isError(result)) printError(result.error, opts(command));
-  printSuccess(result.value, opts(command), result.value.installed ? `Outsource skill installed at ${result.value.path}.` : `Outsource skill is not installed (${result.value.path}).`);
+  const result = await skillStatus(); if (Result.isError(result)) printError(result.error, opts(command));
+  printSuccess(result.value, opts(command), result.value.output);
 });
 skill.command("uninstall").action(async (_args, command: Command) => {
-  const paths = skillPaths(); if (Result.isError(paths)) printError(paths.error, opts(command));
-  const result = await uninstallSkill(paths.value); if (Result.isError(result)) printError(result.error, opts(command));
-  printSuccess({ uninstalled: true, path: result.value.path }, opts(command), `Outsource skill removed from ${result.value.path}.`);
+  const result = await uninstallSkill(); if (Result.isError(result)) printError(result.error, opts(command));
+  printSuccess({ uninstalled: true, output: result.value.output }, opts(command), result.value.output || "Outsource skill removed from global universal skills.");
 });
 
 const config = program.command("config");

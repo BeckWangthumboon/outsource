@@ -13,14 +13,20 @@ outsource skill install
 
 The GitHub install exposes both `outsource` and the `os` shorthand. It requires Bun 1.3 or newer; no npm publication is needed.
 
-To upgrade after a new release, install its tag and refresh the bundled skill:
+`outsource skill install` wraps the [skills.sh CLI](https://www.skills.sh/docs/cli) and installs the `outsource` skill globally for universal agents. Skills.sh uses `universal` for the shared `.agents/skills` convention; its global location is `~/.config/agents/skills`. It runs the equivalent of:
+
+```bash
+npx skills add BeckWangthumboon/outsource --skill outsource --agent universal --global
+```
+
+To upgrade after a new release, install its tag and refresh the globally installed skill:
 
 ```bash
 bun add --global github:BeckWangthumboon/outsource#v0.1.0
 outsource skill install --force
 ```
 
-To remove the Codex skill and CLI:
+To remove the global universal skill and CLI:
 
 ```bash
 outsource skill uninstall

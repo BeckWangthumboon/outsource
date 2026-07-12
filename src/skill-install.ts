@@ -1,40 +1,46 @@
-import { cp, mkdir, rm, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { err, failure, ok, type CliResult } from "./error.js";
+import { runCommand, type CommandRunner } from "./process.js";
 
-export interface SkillPaths { source: string; destination: string }
+const source = "BeckWangthumboon/outsource";
+const name = "outsource";
+const agent = "universal";
 
-export function skillPaths(options: { codexHome?: string; home?: string; packageRoot?: string } = {}): CliResult<SkillPaths> {
-  const home = options.home ?? process.env.HOME;
-  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? (home ? join(home, ".codex") : undefined);
-  if (!codexHome) return err(failure("skill_install_error", "Cannot locate the Codex home directory.", { hint: "Set CODEX_HOME or HOME." }));
-  const packageRoot = options.packageRoot ?? join(import.meta.dir, "..");
-  return ok({ source: join(packageRoot, "skills", "outsource"), destination: join(codexHome, "skills", "outsource") });
-}
+export interface SkillCommandResult { output: string }
 
-async function exists(path: string): Promise<boolean> { try { await stat(path); return true; } catch { return false; } }
-
-export async function installSkill(paths: SkillPaths, force = false): Promise<CliResult<{ path: string }>> {
+async function skills(
+  args: string[],
+  message: string,
+  runner: CommandRunner = runCommand,
+): Promise<CliResult<SkillCommandResult>> {
   try {
-    if (!(await exists(paths.source))) return err(failure("skill_install_error", "The packaged Outsource skill is missing.", { hint: "Reinstall Outsource from GitHub." }));
-    if (await exists(paths.destination)) {
-      if (!force) return err(failure("skill_already_installed", `The Outsource skill is already installed at ${paths.destination}.`, { hint: "Run 'outsource skill install --force' to replace it." }));
-      await rm(paths.destination, { recursive: true, force: true });
+    const result = await runner(["npx", "skills", ...args]);
+    if (result.exitCode !== 0) {
+      return err(failure("skill_install_error", message, {
+        hint: "Ensure Node.js and npm are installed, then try again.",
+        cause: result.stderr.trim(),
+      }));
     }
-    await mkdir(dirname(paths.destination), { recursive: true });
-    await cp(paths.source, paths.destination, { recursive: true });
-    return ok({ path: paths.destination });
-  } catch (cause) { return err(failure("skill_install_error", "Could not install the Outsource skill.", { cause })); }
+    return ok({ output: result.stdout.trim() });
+  } catch (cause) {
+    return err(failure("skill_install_error", message, {
+      hint: "Ensure Node.js and npm are installed, then try again.",
+      cause,
+    }));
+  }
 }
 
-export async function skillStatus(paths: SkillPaths): Promise<CliResult<{ installed: boolean; path: string }>> {
-  return ok({ installed: await exists(paths.destination), path: paths.destination });
+/** Installs the bundled skill through skills.sh into the global universal skills directory. */
+export function installSkill(force = false, runner: CommandRunner = runCommand): Promise<CliResult<SkillCommandResult>> {
+  return skills([
+    "add", source, "--skill", name, "--agent", agent, "--global",
+    ...(force ? ["--yes"] : []),
+  ], "Could not install the Outsource skill with skills.sh.", runner);
 }
 
-export async function uninstallSkill(paths: SkillPaths): Promise<CliResult<{ path: string }>> {
-  try {
-    if (!(await exists(paths.destination))) return err(failure("skill_not_installed", `The Outsource skill is not installed at ${paths.destination}.`));
-    await rm(paths.destination, { recursive: true });
-    return ok({ path: paths.destination });
-  } catch (cause) { return err(failure("skill_install_error", "Could not uninstall the Outsource skill.", { cause })); }
+export function skillStatus(runner: CommandRunner = runCommand): Promise<CliResult<SkillCommandResult>> {
+  return skills(["list", "--global", "--agent", agent], "Could not list global universal skills with skills.sh.", runner);
+}
+
+export function uninstallSkill(runner: CommandRunner = runCommand): Promise<CliResult<SkillCommandResult>> {
+  return skills(["remove", name, "--global", "--agent", agent, "--yes"], "Could not remove the Outsource skill from global universal skills with skills.sh.", runner);
 }
