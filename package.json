@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "description": "A small CLI for Cursor-hosted Cloud Agents",
   "type": "module",
-  "bin": { "outsource": "./dist/cli.js" },
+  "bin": {
+    "outsource": "./dist/cli.js",
+    "os": "./dist/cli.js"
+  },
   "scripts": {
-    "build": "bun build ./src/cli.ts --target=bun --outfile=dist/cli.js && chmod +x dist/cli.js",
+    "build": "bun build ./src/cli.ts --target=bun --packages external --outfile=dist/cli.js && chmod +x dist/cli.js",
     "check": "tsc --noEmit",
     "test": "bun test",
     "verify": "bun run check && bun test && bun run build"

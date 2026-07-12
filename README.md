@@ -10,6 +10,8 @@ bun run build
 bun link
 ```
 
+The install exposes both `outsource` and the `os` shorthand.
+
 Requires Bun, Git, and either macOS Keychain or Linux Secret Service (`secret-tool` from `libsecret-tools`). Set `CURSOR_API_KEY` for CI; it takes precedence over stored credentials.
 
 ## Setup and usage
