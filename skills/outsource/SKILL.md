@@ -9,18 +9,21 @@ Delegate implementation to Cursor and treat the resulting GitHub pull request as
 
 ## Launch a task
 
-1. Run inside the intended Git repository. Ensure the starting branch and any required changes are pushed; Cursor cannot see uncommitted local work.
-2. Write a self-contained prompt containing the task, relevant context, success criteria, required tests, and instructions to create a focused PR without writing to the base branch.
-3. Launch once:
+1. Establish the handoff boundary. The Cursor agent starts from the selected remote branch on `origin` (or `origin`'s default branch when `--branch` is omitted). It cannot see the local working tree, uncommitted changes, local-only files, or the conversation that led to this task.
+2. Make every required input available to the agent:
+   - Attach visual references with `--image`, or describe them precisely in the prompt, when they are not present in the repository.
+   - Do not refer to prior discussion, “the design we picked,” temporary local code, or implied context. Restate the final decision and the exact files, behavior, and acceptance criteria.
+3. Write a self-contained prompt containing the task, relevant repository context, final design or technical decisions, success criteria, required tests, and instructions to create a focused PR.
+4. Launch once:
 
 ```bash
 outsource launch --prompt "..." --json
 ```
 
-Use `--branch <remote-branch>` only to start from a specific existing branch on `origin`. Repeat `--image <path-or-https-url>` for ordered visual references.
+Without `--branch`, the agent starts from `origin`'s default branch—not the current local branch. Use `--branch <remote-branch>` to start from a specific, already-pushed branch on `origin`. Repeat `--image <path-or-https-url>` for ordered visual references.
 
-4. Return the agent ID, run ID, repository, and starting ref as a handoff.
-5. Follow completion through the GitHub PR. Do not wait for, poll, or repeatedly query the Cursor run.
+5. Return the agent ID, run ID, repository, and starting ref as a handoff.
+6. Follow completion through the GitHub PR. Do not wait for, poll, or repeatedly query the Cursor run.
 
 ## Review and corrections
 
