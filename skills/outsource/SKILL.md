@@ -36,7 +36,7 @@ After reviewing the PR, use `outsource follow-up <agent-id> --prompt "..." --jso
 Run these commands only when the user explicitly asks to configure Outsource:
 
 ```bash
-outsource auth set                          # securely store the Cursor API key
+outsource auth set                          # store the Cursor API key locally
 outsource auth status                       # report whether credentials are available
 outsource models                            # inspect available models and parameters
 outsource config set-model <id> [--param id=value]...

@@ -1,18 +1,15 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { Result } from "better-result";
 import { access, mkdtemp, readFile, rm, stat } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { clearApiKey, getApiKey, storeApiKey } from "../src/auth.js";
-import type { CommandRunner } from "../src/process.js";
 
 const TEST_KEY = "key_test_secret_value_abc123";
 const OTHER_KEY = "key_other_secret_value_xyz789";
 
 let home: string | undefined;
 let savedApiKey: string | undefined;
-const missingRunner: CommandRunner = async () => { throw new Error("secret-tool unavailable"); };
-const emptyRunner: CommandRunner = async () => ({ stdout: "", stderr: "", exitCode: 1 });
 
 afterEach(async () => {
   if (savedApiKey === undefined) delete process.env.CURSOR_API_KEY;
@@ -34,30 +31,13 @@ function expectNoKeyLeak(value: unknown) {
 }
 
 describe("credential lookup", () => {
-  test("only looks up credentials stored by outsource", async () => {
-    home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    savedApiKey = process.env.CURSOR_API_KEY;
-    delete process.env.CURSOR_API_KEY;
-    const commands: string[][] = [];
-    const result = await getApiKey(async (command) => {
-      commands.push(command);
-      return { stdout: "", stderr: "not found", exitCode: 1 };
-    }, home);
-
-    expect(Result.isError(result) && result.error.code).toBe("missing_credential");
-    expect(commands).toHaveLength(1);
-    expect(commands[0]).toContain("outsource");
-    expect(commands[0]).not.toContain("cursor-cloud");
-  });
-
-  test("environment variable takes precedence over file and OS store", async () => {
+  test("environment variable takes precedence over file", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
     savedApiKey = process.env.CURSOR_API_KEY;
     process.env.CURSOR_API_KEY = TEST_KEY;
     await writeAuthFile(OTHER_KEY);
 
-    const runner: CommandRunner = async () => ({ stdout: `${OTHER_KEY}\n`, stderr: "", exitCode: 0 });
-    const result = await getApiKey(runner, home);
+    const result = await getApiKey(home);
     expect(Result.isOk(result) && result.value).toEqual({ key: TEST_KEY, source: "environment" });
   });
 
@@ -67,33 +47,8 @@ describe("credential lookup", () => {
     delete process.env.CURSOR_API_KEY;
     await writeAuthFile(TEST_KEY);
 
-    const result = await getApiKey(emptyRunner, home);
+    const result = await getApiKey(home);
     expect(Result.isOk(result) && result.value).toEqual({ key: TEST_KEY, source: "file" });
-  });
-
-  test("uses file credential when secret-tool is unavailable", async () => {
-    home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    savedApiKey = process.env.CURSOR_API_KEY;
-    delete process.env.CURSOR_API_KEY;
-    await writeAuthFile(TEST_KEY);
-
-    const result = await getApiKey(missingRunner, home);
-    expect(Result.isOk(result) && result.value).toEqual({ key: TEST_KEY, source: "file" });
-  });
-
-  test("falls back to OS store when auth file is missing", async () => {
-    home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    savedApiKey = process.env.CURSOR_API_KEY;
-    delete process.env.CURSOR_API_KEY;
-
-    const runner: CommandRunner = async (command) => {
-      return command.includes("outsource")
-        ? { stdout: `${TEST_KEY}\n`, stderr: "", exitCode: 0 }
-        : { stdout: "", stderr: "", exitCode: 1 };
-    };
-    const result = await getApiKey(runner, home);
-    const source = process.platform === "darwin" ? "keychain" : "secret-service";
-    expect(Result.isOk(result) && result.value).toEqual({ key: TEST_KEY, source });
   });
 
   test("reports missing credential when nothing is configured", async () => {
@@ -101,7 +56,7 @@ describe("credential lookup", () => {
     savedApiKey = process.env.CURSOR_API_KEY;
     delete process.env.CURSOR_API_KEY;
 
-    const result = await getApiKey(emptyRunner, home);
+    const result = await getApiKey(home);
     expect(Result.isError(result) && result.error.code).toBe("missing_credential");
     expectNoKeyLeak(result);
   });
@@ -113,7 +68,7 @@ describe("auth file handling", () => {
     savedApiKey = process.env.CURSOR_API_KEY;
     delete process.env.CURSOR_API_KEY;
 
-    const result = await getApiKey(emptyRunner, home);
+    const result = await getApiKey(home);
     expect(Result.isError(result) && result.error.code).toBe("missing_credential");
   });
 
@@ -128,7 +83,7 @@ describe("auth file handling", () => {
     delete process.env.CURSOR_API_KEY;
     await writeAuthFile(TEST_KEY, `${contents}\n`);
 
-    const result = await getApiKey(emptyRunner, home);
+    const result = await getApiKey(home);
     expect(Result.isError(result)).toBe(true);
     if (Result.isError(result)) {
       expect(result.error.code).toBe("configuration_error");
@@ -139,36 +94,21 @@ describe("auth file handling", () => {
 });
 
 describe("store and clear", () => {
-  test("only clears credentials stored by outsource", async () => {
+  test("stores and reads the file credential", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    const commands: string[][] = [];
-    const result = await clearApiKey(async (command) => {
-      commands.push(command);
-      return { stdout: "", stderr: "", exitCode: 0 };
-    }, home);
-
-    expect(Result.isOk(result)).toBe(true);
-    expect(commands).toHaveLength(1);
-    expect(commands[0]).toContain("outsource");
-    expect(commands[0]).not.toContain("cursor-cloud");
-  });
-
-  test("store falls back to auth file when secret-tool is unavailable", async () => {
-    home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    const result = await storeApiKey(TEST_KEY, missingRunner, home, missingRunner);
-    expect(Result.isOk(result)).toBe(true);
+    expect(Result.isOk(await storeApiKey(TEST_KEY, home))).toBe(true);
 
     const path = join(home, ".config", "outsource", "auth.json");
     const parsed = JSON.parse(await readFile(path, "utf8")) as { cursorApiKey: string };
     expect(parsed.cursorApiKey).toBe(TEST_KEY);
 
-    const loaded = await getApiKey(missingRunner, home);
-    expect(Result.isOk(loaded) && loaded.value.source).toBe("file");
+    const loaded = await getApiKey(home);
+    expect(Result.isOk(loaded) && loaded.value).toEqual({ key: TEST_KEY, source: "file" });
   });
 
   test("writes auth file with mode 0600", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    expect(Result.isOk(await storeApiKey(TEST_KEY, missingRunner, home, missingRunner))).toBe(true);
+    expect(Result.isOk(await storeApiKey(TEST_KEY, home))).toBe(true);
 
     const path = join(home, ".config", "outsource", "auth.json");
     const mode = (await stat(path)).mode & 0o777;
@@ -177,7 +117,7 @@ describe("store and clear", () => {
 
   test("creates parent directory with mode 0700", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    expect(Result.isOk(await storeApiKey(TEST_KEY, missingRunner, home, missingRunner))).toBe(true);
+    expect(Result.isOk(await storeApiKey(TEST_KEY, home))).toBe(true);
 
     const dir = join(home, ".config", "outsource");
     const mode = (await stat(dir)).mode & 0o777;
@@ -186,34 +126,26 @@ describe("store and clear", () => {
 
   test("clear removes the auth file", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    await storeApiKey(TEST_KEY, missingRunner, home, missingRunner);
+    await storeApiKey(TEST_KEY, home);
     const path = join(home, ".config", "outsource", "auth.json");
 
-    expect(Result.isOk(await clearApiKey(emptyRunner, home))).toBe(true);
+    expect(Result.isOk(await clearApiKey(home))).toBe(true);
     await expect(access(path)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   test("clear succeeds when auth file is already missing", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
-    expect(Result.isOk(await clearApiKey(emptyRunner, home))).toBe(true);
+    expect(Result.isOk(await clearApiKey(home))).toBe(true);
   });
 
   test("API keys never appear in error messages", async () => {
     home = await mkdtemp(join(tmpdir(), "outsource-home-"));
     await writeAuthFile(TEST_KEY, "not-json\n");
 
-    const lookup = await getApiKey(emptyRunner, home);
-    expect(Result.isError(lookup)).toBe(true);
-    if (Result.isError(lookup)) {
-      expectNoKeyLeak({ code: lookup.error.code, message: lookup.error.message, hint: lookup.error.hint });
-    }
-
-    const failingStore: CommandRunner = async () => ({ stdout: "", stderr: "store failed", exitCode: 2 });
-    const store = await storeApiKey(TEST_KEY, failingStore, home, failingStore);
-    expect(Result.isError(store)).toBe(true);
-    if (Result.isError(store)) {
-      expect(store.error.code).toBe("credential_store_error");
-      expectNoKeyLeak({ code: store.error.code, message: store.error.message, hint: store.error.hint });
+    const result = await getApiKey(home);
+    expect(Result.isError(result)).toBe(true);
+    if (Result.isError(result)) {
+      expectNoKeyLeak({ code: result.error.code, message: result.error.message, hint: result.error.hint });
     }
   });
 });

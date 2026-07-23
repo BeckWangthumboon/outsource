@@ -1,6 +1,6 @@
 {
   "name": "outsource-cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A small CLI for Cursor-hosted Cloud Agents",
   "type": "module",
   "bin": {

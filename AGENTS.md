@@ -16,4 +16,4 @@ Run `bun run verify` before filing a PR. Keep human-owned model configuration ou
 
 ## Platform
 
-The CLI supports macOS Keychain and Linux Secret Service. `CURSOR_API_KEY` overrides stored credentials. Windows is unsupported.
+Credentials use `CURSOR_API_KEY` or `~/.config/outsource/auth.json`; the environment variable overrides the file and is recommended for CI.

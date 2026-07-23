@@ -7,7 +7,7 @@ I built this with 5.6 Sol so that Codex can orchestrate cheaper, straightfoward 
 ## Install
 
 ```bash
-bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#v0.1.5'
+bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#v0.1.6'
 outsource skill install
 ```
 
@@ -23,7 +23,7 @@ To upgrade after a new release, replace the global CLI with its tagged Git sourc
 
 ```bash
 bun remove --global outsource-cli
-bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#v0.1.5'
+bun add --global 'git+ssh://git@github.com/BeckWangthumboon/outsource.git#v0.1.6'
 outsource skill install --force
 ```
 
@@ -42,7 +42,7 @@ bun run verify
 bun link
 ```
 
-Requires Bun and Git. Credentials use macOS Keychain or Linux Secret Service (`secret-tool` from `libsecret-tools`) when available; on Linux without a secret service, Outsource securely falls back to `~/.config/outsource/auth.json` (directory mode `0700`, file mode `0600`). `CURSOR_API_KEY` takes precedence and is recommended for CI.
+Requires Bun and Git. Credentials come from `CURSOR_API_KEY` or `~/.config/outsource/auth.json`. The environment variable takes precedence and is recommended for CI; `auth set` stores the file with directory mode `0700` and file mode `0600`.
 
 ## Setup and usage
 
